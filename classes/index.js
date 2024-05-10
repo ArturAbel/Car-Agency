@@ -621,70 +621,187 @@ class CarAgencyManager {
 		this.agencies = agencies;
 	}
 
+//Search Car And Give The Brand And Index
+searchCarIndex(id, agency){
+  let theCar = [];
+  for (const carBrand of agency.cars) {
+    carBrand.models.find((car, index) => {
+      if (car.carNumber === id) {
+          theCar = [carBrand.brand,index];
+        }
+    });
+    }
+    return theCar.length !== 0 ? theCar : false;
+  }
+
+  
+  //Total Funds In An Agency
+  checkTotalAgencyFunds(agency){
+    return agency.cash + agency.credit;
+  }
+
+
+  //Search Agency
 	searchAgency(idOrName) {
     const find = this.agencies.find((agency) => agency.agencyName === idOrName || agency.agencyId === idOrName);
     return find ? find : null;
   }
 
+
+  //Get All Agencies
 	getAllAgencies() {
     const allAgencies = this.agencies.map((agency)=>agency.agencyName);
     return allAgencies;
   }
 
-	// Add a new car to an agency's inventory.
-	// @param {string} agencyId - The ID of the agency
-	// @param {object} car - The car object to be added
-	// @return {boolean} - true if added successfully, false otherwise
-	addCarToAgency(agencyId, car) {
-      this.agencies.forEach(agency => {
-      agency.cars.forEach(car => {
-      const brand = car.brand;
-      console.log(brand);
-  });
-})
+
+  //Add A Car To An Agency
+  addCarToAgency(id, newCar) {   
+    const agency = this.searchAgency(id);
+    if (!agency) return false;
+    
+    const brand = agency.cars.find((car) => car.brand === newCar.brand);
+      
+    if (brand){
+      brand.models.push(...newCar.models);
+      return true;
+    }
+    else{
+      agency.cars.push(newCar);
+      return true;
+    }
   }
 
-	// Remove a car from an agency's inventory.
-	// @param {string} agencyId - The ID of the agency
-	// @param {string} carId - The ID of the car to be removed
-	// @return {boolean} - true if removed successfully, false otherwise
-	removeCarFromAgency(agencyId, carId) {}
 
-	// Change the cash or credit of an agency.
-	// @param {string} agencyId - The ID of the agency
-	// @param {number} cashOrCredit - The amount of cash or credit to be updated
+  // Remove A Car From An Agency
+	removeCarFromAgency(id, carId) {
+    let carRemoved = false;
+
+    const agency = this.searchAgency(id);
+    if(!agency) return false;
+
+    const theCar = this.searchCarIndex(carId,agency);
+    if(!theCar) return false;
+
+    const [carBrand,index] = theCar;
+
+    agency.cars.forEach( brands => {
+      if (brands.brand === carBrand) {
+        brands.models.splice(index,1);
+        carRemoved = true; 
+      }
+    });
+    return carRemoved;
+  }
+
+
+  //Change The Amount Of Cash And Credit In An Agency
+	changeAgencyCashOrCredit(agencyId, cashOrCredit) {
+    if (typeof cashOrCredit !== `number`) {
+        return false;
+    }
+
+    const agency = this.searchAgency(agencyId);
+    if(!agency) return false;
+
+    if (cashOrCredit < 0) {
+      if (Math.abs(cashOrCredit) > agency.cash) {
+        agency.credit = this.checkTotalAgencyFunds(agency) + cashOrCredit;
+        agency.cash = 0;
+      }
+      else{
+        agency.cash = agency.cash + cashOrCredit;
+      }
+      return true;
+    }
+    else{
+      agency.cash += cashOrCredit;
+       return true;
+    }
+  }
+
 	// @return {boolean} - true if updated successfully, false otherwise
-	changeAgencyCashOrCredit(agencyId, cashOrCredit) {}
+	updateCarPrice(agencyId, carId, newPrice) {
+    const agency = this.searchAgency(agencyId);
+    if(!agency) return false;
 
-	// Update the price of a specific car in an agency.
-	// @param {string} agencyId - The ID of the agency
-	// @param {string} carId - The ID of the car
-	// @param {number} newPrice - The new price of the car
-	// @return {boolean} - true if updated successfully, false otherwise
-	updateCarPrice(agencyId, carId, newPrice) {}
+    const theCar = this.searchCarIndex(carId,agency)
+    if(!theCar) return false;
 
-	// Calculate and return the total revenue for a specific agency.
-	// @param {string} agencyId - The ID of the agency
-	// @return {number} - The total revenue of the agency
-	getTotalAgencyRevenue(agencyId) {}
+    const [carBrand, carIndex] = theCar;
 
-	// Transfer a car from one agency to another.
-	// @param {string} fromAgencyId - The ID of the agency from where the car will be transferred
-	// @param {string} toAgencyId - The ID of the agency to where the car will be transferred
-	// @param {string} carId - The ID of the car to be transferred
-	// @return {boolean} - true if transferred successfully, false otherwise
-	transferCarBetweenAgencies(fromAgencyId, toAgencyId, carId) {}
+    agency.cars.forEach((brands) => {
+      if (brands.brand === carBrand) {
+        brands.models[carIndex].price = newPrice;
+      }
+    })
+    return true;
+  }
+
+  // Get The Total Funds In an Agency Using ID
+	getTotalAgencyRevenue(agencyId) {
+    const agency = this.searchAgency(agencyId);
+    if(!agency) return false;
+
+    return this.checkTotalAgencyFunds (agency);
+  }
+
+
+  //Transfer A Car - Copy Car/Delete Car/Paste Car
+	transferCarBetweenAgencies(fromAgencyId, toAgencyId, carId) {
+
+    const carCopy = this.copyCarObject(fromAgencyId,carId);
+    const remove = this.removeCarFromAgency(fromAgencyId,carId);
+    const add = this.addCarToAgency(toAgencyId,carCopy);
+    
+    if (!carCopy || !remove || !add) {
+      return false;
+    }
+    return true;
+  }
+
+
+    //Copy A Car
+    copyCarObject(id, carId){
+      const agency = this.searchAgency(id);
+      if(!agency) return false;
+
+      let carCopy = {brand: null, models: []};
+
+      agency.cars.forEach((brands) => {
+      brands.models.find((car) => {
+          if (car.carNumber === carId) {
+             carCopy.brand = brands.brand;
+             carCopy.models.push({...car});
+            }
+        })
+      })
+      return carCopy;
+    }
 }
+
+
+
 
 class CustomerManager {
 	constructor(customers) {
 		this.customers = customers;
 	}
 
-	// Search for a customer by their name or ID.
-	// @param {string} idOrName - ID or name of the customer
-	// @return {object} - customer object if found, otherwise null
-	searchCustomer(idOrName) {}
+  //Search For A Customer By ID or Name
+	searchCustomer(idOrName) {
+    const findCustomer = this.customers.find((customer) => customer.name === idOrName || customer.id === idOrName)
+    return findCustomer ? findCustomer : null;
+  }
+
+
+
+
+
+
+
+
+
 
 	// Retrieve all customers' names.
 	// @return {string[]} - Array of customer names
@@ -752,17 +869,39 @@ class CarPurchaseManager {
 // Car Agency Manager Tests
 const carAgencyManager = new CarAgencyManager(agencies);
 
+
+
 console.log(`-------------------------------------------------------------------`);
+
+
+
+
+
 // // Test searchAgency
 console.log('Search Agency by ID: ', carAgencyManager.searchAgency('Plyq5M5AZ'));
 console.log('Search Agency by Name: ', carAgencyManager.searchAgency('Best Deal'));
 console.log('Search Agency Non-existent: ', carAgencyManager.searchAgency('NonExistent'));
 
+
+
+
+
 console.log(`-------------------------------------------------------------------`);
+
+
+
+
+
 // // Test getAllAgencies
 console.log('All Agencies: ', carAgencyManager.getAllAgencies());
 
+
+
+
+
 console.log(`-------------------------------------------------------------------`);
+
+
 // // Test addCarToAgencyconsole.log
 
 const newCar = {
@@ -776,34 +915,95 @@ const newCar = {
   }],
 };
 
-console.log('Add Car to Agency: ', carAgencyManager.addCarToAgency('Plyq5M5AZ', newCar.models[0]));
+console.log('Add Car to Agency: ', carAgencyManager.addCarToAgency('Plyq5M5AZ', newCar));
+
+
+
+console.log(`-------------------------------------------------------------------`);
+
+
+
 
 // // Test removeCarFromAgency
-// console.log('Remove Car from Agency: ', carAgencyManager.removeCarFromAgency('Plyq5M5AZ', 'TEST1'));
-// console.log('Remove Non-existent Car: ', carAgencyManager.removeCarFromAgency('Plyq5M5AZ', 'NonExistent'));
+console.log('Remove Car from Agency: ', carAgencyManager.removeCarFromAgency('Plyq5M5AZ', 'TEST1'));
+console.log('Remove Non-existent Car: ', carAgencyManager.removeCarFromAgency('Plyq5M5AZ', 'NonExistent'));
+
+
+
+
+console.log(`-------------------------------------------------------------------`);
+
+
+
 
 // // Test changeAgencyCashOrCredit
-// console.log('Change Agency Cash: ', carAgencyManager.changeAgencyCashOrCredit('Plyq5M5AZ', 2000000));
-// console.log('Change Agency Cash (Invalid): ', carAgencyManager.changeAgencyCashOrCredit('Plyq5M5AZ', 'invalid'));
+console.log('Change Agency Cash: ', carAgencyManager.changeAgencyCashOrCredit('Plyq5M5AZ', 2000000));
+console.log('Change Agency Cash (Invalid): ', carAgencyManager.changeAgencyCashOrCredit('Plyq5M5AZ', 'invalid'));
+
+
+
+
+
+console.log(`-------------------------------------------------------------------`);
+
+
 
 // // Test updateCarPrice
-// console.log('Update Car Price: ', carAgencyManager.updateCarPrice('Plyq5M5AZ', 'AZJZ4', 150000));
-// console.log('Update Car Price Non-existent: ', carAgencyManager.updateCarPrice('Plyq5M5AZ', 'NonExistent', 150000));
+console.log('Update Car Price: ', carAgencyManager.updateCarPrice('Plyq5M5AZ', 'AZJZ4', 150000));
+console.log('Update Car Price Non-existent: ', carAgencyManager.updateCarPrice('Plyq5M5AZ', 'NonExistent', 150000));
+
+
+
+
+console.log(`-------------------------------------------------------------------`);
+
+
+
+
+
 
 // // Test getTotalAgencyRevenue
-// console.log('Total Agency Revenue: ', carAgencyManager.getTotalAgencyRevenue('Plyq5M5AZ'));
+console.log('Total Agency Revenue: ', carAgencyManager.getTotalAgencyRevenue('Plyq5M5AZ'));
+
+
+
+
+
+
+console.log(`-------------------------------------------------------------------`);
+
+
+
+
 
 // // Test transferCarBetweenAgencies
-// console.log('Transfer Car Between Agencies: ', carAgencyManager.transferCarBetweenAgencies('Plyq5M5AZ', '26_IPfHU1', 'AZJZ4'));
-// console.log('Transfer Car Between Agencies (Non-existent): ', carAgencyManager.transferCarBetweenAgencies('NonExistent', '26_IPfHU1', 'AZJZ4'));
+console.log('Transfer Car Between Agencies: ', carAgencyManager.transferCarBetweenAgencies('Plyq5M5AZ', '26_IPfHU1', 'AZJZ4'));
+console.log('Transfer Car Between Agencies (Non-existent): ', carAgencyManager.transferCarBetweenAgencies('NonExistent', '26_IPfHU1', 'AZJZ4'));
+
+
+
+
+
+console.log(`-------------------------------------------------------------------`);
+
+
+
 
 // // Customer Manager Tests
-// const customerManager = new CustomerManager(customers);
+const customerManager = new CustomerManager(customers);
+
 
 // // Test searchCustomer
-// console.log('Search Customer by ID: ', customerManager.searchCustomer('BGzHhjnE8'));
-// console.log('Search Customer by Name: ', customerManager.searchCustomer('Lilah Goulding'));
-// console.log('Search Customer Non-existent: ', customerManager.searchCustomer('NonExistent'));
+console.log('Search Customer by ID: ', customerManager.searchCustomer('BGzHhjnE8'));
+console.log('Search Customer by Name: ', customerManager.searchCustomer('Lilah Goulding'));
+console.log('Search Customer Non-existent: ', customerManager.searchCustomer('NonExistent'));
+
+
+
+
+
+console.log(`-------------------------------------------------------------------`);
+
 
 // // Test getAllCustomers
 // console.log('All Customers: ', customerManager.getAllCustomers());
