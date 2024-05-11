@@ -1,1 +1,1 @@
-    // const add = this.addCarToAgency(toAgencyId,carCopy);
+    this.updateTaxAuthorities(saleTax, carRate);
