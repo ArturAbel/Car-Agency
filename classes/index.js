@@ -629,7 +629,7 @@ class CarAgencyManager {
     for (const carBrand of agency.cars) {
       carBrand.models.find((car, index) => {
         if (car.carNumber === id) {
-          return theCar = [carBrand.brand, index];
+          return (theCar = [carBrand.brand, index]);
         }
       });
     }
@@ -653,7 +653,7 @@ class CarAgencyManager {
 
   //Get All Agencies
   getAllAgencies() {
-    return this.agencies.map(agency => agency.agencyName);
+    return this.agencies.map((agency) => agency.agencyName);
   }
 
   //Add A Car To An Agency
@@ -825,22 +825,21 @@ class CarManager {
 
     this.agencies.forEach((agency) => {
       agency.cars.forEach((car) => {
-        cars.push(...car.models);
+        cars.push(...car.models);  //Spreading All Cars In Empty Array 
       });
     });
     return cars;
   }
 
-
   // Search A Car By Brand / Price / Year range
   searchCars(carYear, carPrice, carBrand) {
     const carArray = [];
-  
-    this.agencies.forEach(agency => {
-      agency.cars.forEach(brands => {
-        if (brands.brand === carBrand){
-          brands.models.forEach(car => {
-            if (car.year === carYear && car.price === carPrice) {
+
+    this.agencies.forEach((agency) => {
+      agency.cars.forEach((brands) => {
+        if (brands.brand === carBrand) {   //If The Brand Is Correct
+          brands.models.forEach((car) => {
+            if (car.year === carYear && car.price === carPrice) {  //If The Price And Year Are Correct
               carArray.push(car);
             }
           });
@@ -850,24 +849,23 @@ class CarManager {
 
     return carArray.length !== 0 ? carArray : null;
   }
-  
+
   // Returns The Most Expensive Car
   getMostExpensiveCar() {
-    const allCars = this.getAllCars();
-    
-    const mostExpensiveCar = allCars.reduce((mostExpensive, car) =>{
-   return  mostExpensive.price < car.price ? car : mostExpensive;
-    }, allCars[0])
-    
+    const allCars = this.getAllCars();  //Get All The Cars 
+
+    const mostExpensiveCar = allCars.reduce((mostExpensive, car) => {
+      return mostExpensive.price < car.price ? car : mostExpensive;
+    }, allCars[0]);
+
     return mostExpensiveCar;
   }
 
-
-   // Returns The cheapest Car
+  // Returns The cheapest Car
   getCheapestCar() {
-    const allCars = this.getAllCars();
-    
-    const cheapestCar = allCars.reduce((cheapest,car) => {
+    const allCars = this.getAllCars(); //Get All The Cars 
+
+    const cheapestCar = allCars.reduce((cheapest, car) => {
       return cheapest.price > car.price ? car : cheapest;
     }, allCars[0]);
 
@@ -896,50 +894,50 @@ class CarPurchaseManager {
   }
 
   // Find The Car's Agency (First Instance Of The Car ID)
-  searchAgencyWIthCarID(theCarId){
+  searchAgencyWIthCarID(theCarId) {
     let theAgency = null;
-     this.agencies.find( agency =>{
-      return agency.cars.find(brands => {
-        return brands.models.find( car => {
-           if(car.carNumber === theCarId){
-            return theAgency = {...agency};
+    this.agencies.find((agency) => {
+      return agency.cars.find((brands) => {
+        return brands.models.find((car) => {
+          if (car.carNumber === theCarId) {
+            return (theAgency = { ...agency });
           }
-        })
-      })
-    })
+        });
+      });
+    });
     return theAgency !== null ? theAgency : false;
   }
 
   // Function From First Exercise To Get Car Index And Availability (Added Price)
   searchCarIndex(id, agency) {
     let theCar = [];
-    
-    agency.cars.forEach(brand => {
+
+    agency.cars.forEach((brand) => {
       brand.models.find((car, index) => {
         if (car.carNumber === id) {
-          return theCar = [brand.brand,index ,car.price];
+          return (theCar = [brand.brand, index, car.price]);
         }
       });
-    })
+    });
     return theCar.length !== 0 ? theCar : false;
   }
 
   //Verify Customer Has enough Cash
-  verifyCustomerCash(customer, rate){
-    return customer.cash >= rate ? true : false;  
+  verifyCustomerCash(customer, rate) {
+    return customer.cash >= rate ? true : false;
   }
 
   // Update Cash Transfer And Get Tax
-  updateCashTransfer(customer, agency, rate){
+  updateCashTransfer(customer, agency, rate) {
     const tax17 = Math.round(rate * 0.17);
     customer.cash -= rate;
-    agency.cash += (rate - tax17);
+    agency.cash += rate - tax17;
     console.log(`Transaction Was Successful`);
-    return tax17;
+    return tax17;//Returning The Tax To Use For The Taxation
   }
 
   //Update Tax Authorities
-  updateTaxAuthorities(taxCollected, sumOfTransactions){
+  updateTaxAuthorities(taxCollected, sumOfTransactions) {
     this.taxesAuthority.totalTaxesPaid += taxCollected;
     this.taxesAuthority.sumOfAllTransactions += sumOfTransactions;
     this.taxesAuthority.numberOfTransactions++;
@@ -950,7 +948,7 @@ class CarPurchaseManager {
   removeCarFromAgency(agency, carDetails) {
     let carCopy = {};
 
-    const [carBrand, index, ] = carDetails;
+    const [carBrand, index] = carDetails;
     agency.cars.forEach((brands) => {
       if (brands.brand === carBrand) {
         carCopy = brands.models.splice(index, 1);
@@ -967,68 +965,43 @@ class CarPurchaseManager {
     return true;
   }
 
-
   // Sell A Car, FInd The Agency Using Car ID And Handling The Cash And The Transfer
   sellCar(carNumber, customerId) {
-
-    const theAgency = this.searchAgencyWIthCarID(carNumber);    //Find The Agency 
+    const theAgency = this.searchAgencyWIthCarID(carNumber); //Find The Agency
     if (!theAgency) return false;
-
-    const theCar = this.searchCarIndex(carNumber,theAgency);    // Restructure The Car
+    const theCar = this.searchCarIndex(carNumber, theAgency); // Restructure The Car
     if (!theCar) return false;
-
-    const theCustomer = this.searchCustomer(customerId);        // Find The Customer
+    const theCustomer = this.searchCustomer(customerId); // Find The Customer
     if (!theCustomer) return false;
 
-    const [, , carRate] = theCar                                // Use The Rate Of The Car
-
-    const verifyCustomerCash = this.verifyCustomerCash(theCustomer,carRate);
+    const [, , carRate] = theCar; // Use The Rate Of The Car
+    const verifyCustomerCash = this.verifyCustomerCash(theCustomer, carRate);
     if (!verifyCustomerCash) {
       console.log(`The Customer Does Not Have Enough Cash`);
       return false;
     }
-    const saleTax = this.updateCashTransfer(theCustomer, theAgency, carRate);  //Update The Cash
-
-    this.updateTaxAuthorities(saleTax, carRate);                               //Update taxesAuthority
-    
-    const carCopy = this.removeCarFromAgency(theAgency, theCar);               //Remove The Car And Copy
-    
-    const addCar = this.addCarToCustomer(theCustomer,carCopy);                 //Add Car And Change ID
+    const saleTax = this.updateCashTransfer(theCustomer, theAgency, carRate); //Update The Cash
+    this.updateTaxAuthorities(saleTax, carRate); //Update taxesAuthority
+    const carCopy = this.removeCarFromAgency(theAgency, theCar); //Remove The Car And Copy
+    const addCar = this.addCarToCustomer(theCustomer, carCopy); //Add Car And Change ID
     if (addCar) return true;
   }
 
   // Calculates The Revenue Of All The Agencies Together
   getTotalMarketRevenue() {
-    return this.agencies.reduce((total, agency) => total + (agency.cash + agency.credit),0);
+    return this.agencies.reduce(
+      (total, agency) => total + (agency.cash + agency.credit),
+      0
+    );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 console.log(
   `-------------------------------------------------------------------`
 );
 
-
 // Car Agency Manager Tests
 const carAgencyManager = new CarAgencyManager(agencies);
-
-
-
-
-
 
 // Test searchAgency
 console.log(
@@ -1044,31 +1017,16 @@ console.log(
   carAgencyManager.searchAgency("NonExistent")
 );
 
-
-
-
-
 console.log(
   `-------------------------------------------------------------------`
 );
-
-
-
 
 // Test getAllAgencies
 console.log("All Agencies: ", carAgencyManager.getAllAgencies());
 
-
-
-
-
 console.log(
   `-------------------------------------------------------------------`
 );
-
-
-
-
 
 // Test addCarToAgencyconsole.log
 
@@ -1090,15 +1048,9 @@ console.log(
   carAgencyManager.addCarToAgency("Plyq5M5AZ", newCar)
 );
 
-
-
-
 console.log(
   `-------------------------------------------------------------------`
 );
-
-
-
 
 // Test removeCarFromAgency
 console.log(
@@ -1110,15 +1062,9 @@ console.log(
   carAgencyManager.removeCarFromAgency("Plyq5M5AZ", "NonExistent")
 );
 
-
-
-
 console.log(
   `-------------------------------------------------------------------`
 );
-
-
-
 
 // Test changeAgencyCashOrCredit
 console.log(
@@ -1130,16 +1076,9 @@ console.log(
   carAgencyManager.changeAgencyCashOrCredit("Plyq5M5AZ", "invalid")
 );
 
-
-
-
 console.log(
   `-------------------------------------------------------------------`
 );
-
-
-
-
 
 // Test updateCarPrice
 console.log(
@@ -1151,17 +1090,9 @@ console.log(
   carAgencyManager.updateCarPrice("Plyq5M5AZ", "NonExistent", 150000)
 );
 
-
-
-
-
 console.log(
   `-------------------------------------------------------------------`
 );
-
-
-
-
 
 // Test getTotalAgencyRevenue
 console.log(
@@ -1169,17 +1100,9 @@ console.log(
   carAgencyManager.getTotalAgencyRevenue("Plyq5M5AZ")
 );
 
-
-
-
-
 console.log(
   `-------------------------------------------------------------------`
 );
-
-
-
-
 
 // Test transferCarBetweenAgencies
 console.log(
@@ -1195,17 +1118,9 @@ console.log(
   )
 );
 
-
-
-
-
 console.log(
   `-------------------------------------------------------------------`
 );
-
-
-
-
 
 // Customer Manager Tests
 const customerManager = new CustomerManager(customers);
@@ -1224,31 +1139,16 @@ console.log(
   customerManager.searchCustomer("NonExistent")
 );
 
-
-
-
-
 console.log(
   `-------------------------------------------------------------------`
 );
-
-
-
-
 
 // Test getAllCustomers
 console.log("All Customers: ", customerManager.getAllCustomers());
 
-
-
-
-
 console.log(
   `-------------------------------------------------------------------`
 );
-
-
-
 
 // Test changeCustomerCash
 console.log(
@@ -1260,15 +1160,9 @@ console.log(
   customerManager.changeCustomerCash("NonExistent", 50000)
 );
 
-
-
-
 console.log(
   `-------------------------------------------------------------------`
 );
-
-
-
 
 // Test getCustomerTotalCarValue
 console.log(
@@ -1280,16 +1174,9 @@ console.log(
   customerManager.getCustomerTotalCarValue("NonExistent")
 );
 
-
-
-
-
 console.log(
   `-------------------------------------------------------------------`
 );
-
-
-
 
 // Car Manager Tests
 const carManager = new CarManager(agencies);
@@ -1297,85 +1184,53 @@ const carManager = new CarManager(agencies);
 // Test getAllCars
 console.log("All Cars: ", carManager.getAllCars());
 
-
-
-
 console.log(
   `-------------------------------------------------------------------`
 );
-
-
-
 
 // Test searchCars
 console.log("Search Cars: ", carManager.searchCars(2020, 966500, "bmw"));
 console.log("Search Cars (No Brand): ", carManager.searchCars(2020, 500000));
 
-
-
-
 console.log(
   `-------------------------------------------------------------------`
 );
-
-
-
-
-
-
 
 // Test getMostExpensiveCar
-console.log('Most Expensive Car: ', carManager.getMostExpensiveCar());
-
-
-
-
-
+console.log("Most Expensive Car: ", carManager.getMostExpensiveCar());
 
 console.log(
   `-------------------------------------------------------------------`
 );
-
-
-
-
-
 
 // Test getCheapestCar
-console.log('Cheapest Car: ', carManager.getCheapestCar());
-
-
-
-
-
+console.log("Cheapest Car: ", carManager.getCheapestCar());
 
 console.log(
   `-------------------------------------------------------------------`
 );
-
-
-
-
-
 
 // Car Purchase Manager Tests
 const carPurchaseManager = new CarPurchaseManager(agencies, customers);
 
-
 // Test sellCar
-console.log('Sell Car: ', carPurchaseManager.sellCar('AZJZ4', 'FQvNsEwLZ'));
+console.log("Sell Car: ", carPurchaseManager.sellCar("AZJZ4", "FQvNsEwLZ"));
 // The Above Customer Does Not Have Enough Cash Since The Car Price Was Changed To 150,000 In Previous Exercise So I Chose A Different Customer To Check Instead 'BGzHhjnE8'.
-console.log('Sell Car (Non-existent): ', carPurchaseManager.sellCar('NonExistent', 'BGzHhjnE8'));
-console.log('Sell Car (Insufficient Funds): ', carPurchaseManager.sellCar('AZJZ4', 'Wm6BkA1F0'));
-
-
-
-
+console.log(
+  "Sell Car (Non-existent): ",
+  carPurchaseManager.sellCar("NonExistent", "BGzHhjnE8")
+);
+console.log(
+  "Sell Car (Insufficient Funds): ",
+  carPurchaseManager.sellCar("AZJZ4", "Wm6BkA1F0")
+);
 
 console.log(
   `-------------------------------------------------------------------`
 );
 
-
 // Test getTotalMarketRevenue
-console.log('Total Market Revenue: ', carPurchaseManager.getTotalMarketRevenue());
+console.log(
+  "Total Market Revenue: ",
+  carPurchaseManager.getTotalMarketRevenue()
+);
